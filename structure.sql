@@ -73,6 +73,7 @@ create function disallow_multiple_reservations()
       where
         user_id = new.user_id
         and (reservation_date + end_time) > now()
+        and deleted_at is null
     ) then
       raise exception 'One user cannot make multiple reservations';
     end if;
@@ -146,6 +147,30 @@ create trigger set_deleted_at
   on reservations
   for each row
   execute procedure set_deleted_at();
+
+-- add subscription triggers
+
+create function notify_reservation_updated()
+  returns trigger as $$
+  begin
+    perform pg_notify(
+       'postgraphile:reservation_updated',
+       '{}'
+     );
+    return new;
+  end;
+  $$ language 'plpgsql';
+
+create trigger trigger_reservation_updated_on_insert
+  after insert
+  on reservations
+  execute procedure notify_reservation_updated();
+
+create trigger trigger_reservation_updated_on_update
+  after update
+  on reservations
+  execute procedure notify_reservation_updated();
+
 
 -- insert values
 

@@ -11,7 +11,7 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   postgraphile:
-    image: graphile/postgraphile:4
+    build: ./postgraphile
     ports:
       - '5000:5000'
     environment:
@@ -19,7 +19,9 @@ services:
       DATABASE_URL: postgres://postgraphile:xyz@db:5432/postgres
     command: [
       '--enhance-graphiql',
-      '--dynamic-json'
+      '--dynamic-json',
+      '--subscriptions',
+      '--simple-subscriptions'
       ]
     depends_on:
       - db
